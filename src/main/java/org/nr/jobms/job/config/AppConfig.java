@@ -9,7 +9,7 @@ import org.springframework.web.client.RestTemplate;
 public class AppConfig {
 
 
-    @Bean
+    //    @Bean
     @LoadBalanced //makes the request in load balanced way.
     public RestTemplate restTemplate() {
         return new RestTemplate();
