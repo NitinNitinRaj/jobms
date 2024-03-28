@@ -4,6 +4,8 @@ package org.nr.jobms.job.impl;
 import org.nr.jobms.job.Job;
 import org.nr.jobms.job.JobRepository;
 import org.nr.jobms.job.JobService;
+import org.nr.jobms.job.clients.CompanyClient;
+import org.nr.jobms.job.clients.ReviewClient;
 import org.nr.jobms.job.dto.JobDTO;
 import org.nr.jobms.job.external.Company;
 import org.nr.jobms.job.external.Review;
@@ -21,11 +23,13 @@ import java.util.stream.Collectors;
 @Service
 public class JobServiceImpl implements JobService {
     private final JobRepository jobRepository;
-    private final RestTemplate restTemplate;
+    private final CompanyClient companyClient;
+    private final ReviewClient reviewClient;
 
-    public JobServiceImpl(JobRepository jobRepository, RestTemplate restTemplate) {
+    public JobServiceImpl(JobRepository jobRepository, CompanyClient companyClient, ReviewClient reviewClient) {
         this.jobRepository = jobRepository;
-        this.restTemplate = restTemplate;
+        this.companyClient = companyClient;
+        this.reviewClient = reviewClient;
     }
 
     @Override
@@ -36,14 +40,8 @@ public class JobServiceImpl implements JobService {
 
     private JobDTO convertToDto(Job job) {
 
-        Company company = restTemplate.getForObject("http://COMPANY-SERVICE:8081/companies/" + job.getCompanyId(), Company.class);
-
-        ResponseEntity<List<Review>> reviewResponse = restTemplate.exchange("http://REVIEW-SERVICE:8083/reviews?companyId=" + job.getCompanyId(),
-                HttpMethod.GET, null,
-                new ParameterizedTypeReference<List<Review>>() {
-                }
-        );
-        List<Review> reviews = reviewResponse.getBody();
+        Company company = companyClient.getCompany(job.getCompanyId());
+        List<Review> reviews = reviewClient.getReview(job.getCompanyId());
         return JobMapper.mapToJobWithCompanyDto(job, company, reviews);
     }
 
