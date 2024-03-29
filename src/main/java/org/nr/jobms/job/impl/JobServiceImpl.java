@@ -2,6 +2,7 @@ package org.nr.jobms.job.impl;
 
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.nr.jobms.job.Job;
 import org.nr.jobms.job.JobRepository;
 import org.nr.jobms.job.JobService;
@@ -28,6 +29,8 @@ public class JobServiceImpl implements JobService {
     private final CompanyClient companyClient;
     private final ReviewClient reviewClient;
 
+    int attempt = 0;
+
     public JobServiceImpl(JobRepository jobRepository, CompanyClient companyClient, ReviewClient reviewClient) {
         this.jobRepository = jobRepository;
         this.companyClient = companyClient;
@@ -47,6 +50,13 @@ public class JobServiceImpl implements JobService {
         return list;
     }
 
+    public JobDTO companyBreakerFallbackRetry(Long id, Exception e) {
+        List<String> list = new ArrayList<>();
+        list.add("Dummy Retry Fallback " + id);
+        System.out.println(list);
+        return null;
+    }
+
     private JobDTO convertToDto(Job job) {
 
         Company company = companyClient.getCompany(job.getCompanyId());
@@ -59,9 +69,12 @@ public class JobServiceImpl implements JobService {
         jobRepository.save(job);
     }
 
-    @CircuitBreaker(name = "companyBreaker", fallbackMethod = "companyBreakerFallback")
+    //    @CircuitBreaker(name = "companyBreaker", fallbackMethod = "companyBreakerFallback")
+
     @Override
+    @Retry(name = "companyRetry", fallbackMethod = "companyBreakerFallbackRetry")
     public JobDTO getJobById(Long id) {
+        System.out.println("Attempt: " + ++attempt);
         Job job = jobRepository.findById(id).orElse(null);
         return convertToDto(job);
     }
