@@ -54,6 +54,7 @@ public class JobServiceImpl implements JobService {
         List<String> list = new ArrayList<>();
         list.add("Dummy Retry Fallback " + id);
         System.out.println(list);
+        // throw some exception and handle globally
         return null;
     }
 
