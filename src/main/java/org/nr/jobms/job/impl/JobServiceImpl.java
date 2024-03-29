@@ -1,6 +1,7 @@
 package org.nr.jobms.job.impl;
 
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.nr.jobms.job.Job;
 import org.nr.jobms.job.JobRepository;
 import org.nr.jobms.job.JobService;
@@ -33,6 +34,7 @@ public class JobServiceImpl implements JobService {
     }
 
     @Override
+    @CircuitBreaker(name = "companyBreaker")
     public List<JobDTO> findAll() {
         List<Job> jobs = jobRepository.findAll();
         return jobs.stream().map(this::convertToDto).collect(Collectors.toList());
@@ -50,6 +52,7 @@ public class JobServiceImpl implements JobService {
         jobRepository.save(job);
     }
 
+    @CircuitBreaker(name = "companyBreaker")
     @Override
     public JobDTO getJobById(Long id) {
         Job job = jobRepository.findById(id).orElse(null);
