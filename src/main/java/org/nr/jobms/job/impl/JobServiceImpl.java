@@ -2,6 +2,7 @@ package org.nr.jobms.job.impl;
 
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import org.nr.jobms.job.Job;
 import org.nr.jobms.job.JobRepository;
@@ -50,6 +51,14 @@ public class JobServiceImpl implements JobService {
         return list;
     }
 
+    public JobDTO companyRateLimiterFallBack(Long id, Exception e) {
+        List<String> list = new ArrayList<>();
+        list.add("Dummy RateLimiter Fallback " + id);
+        System.out.println(list);
+        // throw some exception and handle globally
+        return null;
+    }
+
     public JobDTO companyBreakerFallbackRetry(Long id, Exception e) {
         List<String> list = new ArrayList<>();
         list.add("Dummy Retry Fallback " + id);
@@ -74,6 +83,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     @Retry(name = "companyRetry", fallbackMethod = "companyBreakerFallbackRetry")
+    @RateLimiter(name = "companyLimiter", fallbackMethod = "companyRateLimiterFallBack")
     public JobDTO getJobById(Long id) {
         System.out.println("Attempt: " + ++attempt);
         Job job = jobRepository.findById(id).orElse(null);
